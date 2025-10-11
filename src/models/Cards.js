@@ -48,4 +48,17 @@ export function createCard(rank, suit) {
   });
 }
 
+/**
+ * Compare two cards based on their numeric value.
+ *
+ * Used primarily for sorting or ranking purposes.
+ *
+ * @param {{ value: number }} a - The first card to compare.
+ * @param {{ value: number }} b - The second card to compare.
+ * @returns {number} A negative number if `a` is lower, positive if `a` is higher, or 0 if equal.
+ */
+export function compareCardsRank(a, b)
+{
+    return a.value - b.value;
+}
 export { SUITS, RANKS };

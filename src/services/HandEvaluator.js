@@ -1,0 +1,259 @@
+import { compareCardsRank } from "../models/Cards.js";
+import { countByRank } from "../models/Decks.js";
+
+export const HAND_RANKS = {
+  HIGH_CARD: 1,
+  PAIR: 2,
+  TWO_PAIR: 3,
+  THREE_OF_KIND: 4,
+  STRAIGHT: 5,
+  FLUSH: 6,
+  FULL_HOUSE: 7,
+  FOUR_OF_KIND: 8,
+  STRAIGHT_FLUSH: 9,
+  ROYAL_FLUSH: 10
+}
+
+
+let cards = [
+    {rank: '2', suit: '♠', value: 2},
+    {rank: '8', suit: '♠', value: 8},
+    {rank: '10', suit: '♥', value: 10},
+    {rank: '5', suit: '♠', value: 5},
+    {rank: 'Q', suit: '♠', value: 12},
+    {rank: '7', suit: '♠', value: 7},
+    {rank: 'A', suit: '♦', value: 14}
+]
+
+let playerCards = [
+    {rank: 'J', suit: '♠', value: 11},
+    {rank: 'K', suit: '♠', value: 13}
+];
+
+let tableCards = [
+    {rank: '10', suit: '♠', value: 10},
+    {rank: '10', suit: '♥', value: 10},
+    {rank: '10', suit: '♣', value: 10},
+    {rank: 'A', suit: '♣', value: 14},
+    {rank: 'A', suit: '♠', value: 14}
+];
+
+/**
+ * Compute the best 5-card hand rank from player's hole cards plus community cards.
+ *
+ * Returns the highest-ranking 5-card combination among all possible 5-card subsets.
+ *
+ * @param {{rank:string, suit:string, value:number}[]} playerCards - The player's two hole cards.
+ * @param {{rank:string, suit:string, value:number}[]} tableCards - The community cards on the table.
+ * @returns {{cards: {rank:string, suit:string, value:number}[], rank: number}} The best hand (five cards) and its numeric rank.
+ */
+export function bestRank(playerCards, tableCards)
+{
+    const allCards = [...playerCards, ...tableCards];
+    const allCombinations = getAllCombinations(allCards, 5);
+    let bestHand = {
+        cards: [],
+        rank: HAND_RANKS.HIGH_CARD
+    }
+    return allCombinations.reduce((acc, curr) =>
+    {
+        let newRank = getRank(curr);
+        if(acc.rank < newRank)
+        {
+            acc.cards = curr;
+            acc.rank = newRank;
+        }
+        return acc;
+    }, bestHand);
+}
+
+
+
+/**
+ * Generate all k-combinations from an array of cards.
+ *
+ * Functional approach: does not mutate the input array.
+ *
+ * @param {{rank:string, suit:string, value:number}[]} cards - Source cards.
+ * @param {number} combinationLength - Size of each combination (k).
+ * @returns {{rank:string, suit:string, value:number}[][]} An array of combinations (each is an array of k cards).
+ */
+export function getAllCombinations(cards, combinationLength){
+    let head, tail, result = [];
+    if (combinationLength > cards.length || combinationLength < 1)
+    {
+        return [];
+    }
+    if (combinationLength === cards.length)
+    {
+        return [cards];
+    }
+    if (combinationLength === 1)
+    {
+        return cards.map(card => [card]);
+    }
+    for (let i = 0; i < cards.length - combinationLength + 1; i++)
+    {
+        head = cards.slice(i,i+1);
+        tail = getAllCombinations(cards.slice(i+1), combinationLength -1);
+        for (let j = 0; j < tail.length; j++)
+        {
+            result.push(head.concat(tail[j]));
+        }
+    }
+    return result;
+}
+
+/**
+ * Evaluate a 5-card hand and return its rank.
+ *
+ * The check order goes from strongest (Royal Flush) to weakest (High Card).
+ *
+ * @param {{rank:string, suit:string, value:number}[]} cards - Exactly five cards to evaluate.
+ * @returns {number} A numeric rank from {@link HAND_RANKS}.
+ */
+export function getRank(cards)
+{
+    let AreStraight = isStraight(cards);
+    let AreFlush = isFlush(cards);
+    const counts = countByRank(cards);
+    if (AreStraight && AreFlush && isFlushRoyal(cards))
+    {
+        return HAND_RANKS.ROYAL_FLUSH;
+    }
+    if (AreStraight && AreFlush)
+    {
+        return HAND_RANKS.STRAIGHT_FLUSH;
+    }
+    if (isOfKind(4, counts))
+    {
+        return HAND_RANKS.FOUR_OF_KIND;
+    }
+    if (isFullHouse(cards, counts))
+    {
+        return HAND_RANKS.FULL_HOUSE;
+    }
+    if (AreFlush)
+    {
+        return HAND_RANKS.FLUSH;
+    }
+    if (AreStraight)
+    {
+        return HAND_RANKS.STRAIGHT;
+    }
+    if (isOfKind(3, counts))
+    {
+        return HAND_RANKS.THREE_OF_KIND;
+    }
+    if (Object.values(counts).filter(el => el === 2).length === 2)
+    {
+        return HAND_RANKS.TWO_PAIR;
+    }
+    if (Object.values(counts).filter(el => el === 2).length === 1)
+    {
+        return HAND_RANKS.PAIR;
+    }
+    return HAND_RANKS.HIGH_CARD;
+}
+
+/**
+ * Check whether five cards form a straight (5 sequential values).
+ *
+ * This function sorts the input array in-place using {@link compareCardsRank}.
+ * Handles the Ace-low straight (A-2-3-4-5) as a special case.
+ *
+ * @param {{rank:string, suit:string, value:number}[]} cards - Exactly five cards.
+ * @returns {boolean} True if the hand is a straight, otherwise false.
+ */
+export function isStraight(cards)
+{
+    cards.sort(compareCardsRank);
+    let isStraight = cards.every((card, idx, arr) => {
+        if (idx === 0)
+        {
+            return true;
+        }
+        return (card.value - arr[idx - 1].value) === 1
+    });
+    if (cards[0].value === 2 &&
+        cards[1].value === 3 &&
+        cards[2].value === 4 &&
+        cards[3].value === 5 &&
+        cards[4].value === 14)
+    {
+        isStraight = true;
+    }
+    return isStraight;
+}
+
+
+/**
+ * Check whether five cards share the same suit (flush).
+ *
+ * @param {{rank:string, suit:string, value:number}[]} cards - Exactly five cards.
+ * @returns {boolean} True if all cards have the same suit, otherwise false.
+ */
+export function isFlush(cards)
+{
+    return cards.every((card, idx, arr) =>{
+        if (idx === 0)
+        {
+            return true;
+        }
+        return card.suit === arr[idx - 1].suit;
+    })
+}
+
+/**
+ * Check whether the hand is a full house (three of a kind + a pair).
+ *
+ * @param {{rank:string, suit:string, value:number}[]} cards - Exactly five cards.
+ * @param {Object.<number, number>} count - Frequency map produced by {@link countByRank}.
+ * @returns {boolean} True if the hand is a full house, otherwise false.
+ */
+export function isFullHouse(cards, count)
+{
+    let keys = Object.keys(count);
+    if ((count[keys[0]] === 2 && count[keys[1]] === 3) || 
+        count[keys[0]] === 3 && count[keys[1]] === 2
+    )
+    {
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Generic helper to check for "N of a kind".
+ *
+ * @param {number} number - The target multiplicity (e.g., 3 for trips, 4 for quads).
+ * @param {Object.<number, number>} count - Frequency map produced by {@link countByRank}.
+ * @returns {boolean} True if the maximum frequency equals the target, otherwise false.
+ */
+export function isOfKind(number, count)
+{
+    let max = Math.max(...Object.values(count))
+    if (max === number)
+    {
+        return true;
+    }
+    return false;
+}
+
+
+/**
+ * Check whether a straight flush is a royal flush (10 through Ace).
+ *
+ * Assumes the hand is already a straight and a flush.
+ *
+ * @param {{rank:string, suit:string, value:number}[]} cards - Exactly five cards (ideally sorted ascending by value).
+ * @returns {boolean} True if the straight flush runs 10–A, otherwise false.
+ */
+export function isFlushRoyal(cards)
+{
+    if (cards[0].value === 10 && cards[4].value === 14)
+    {
+        return true;
+    }
+    return false
+}
