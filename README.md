@@ -105,10 +105,4 @@ Poker/
 
 ---
 
-## Licence
-
-Ce projet est open-source, sous licence MIT.
-
----
-
 **Bon jeu !**
