@@ -67,7 +67,11 @@ export function bestRank(playerCards, tableCards)
     }, bestHand);
 }
 
-
+export function compareHands(hands)
+{
+    hands.sort((a, b) => b.evaluation.rank - a.evaluation.rank);
+    return hands[0];
+}
 
 /**
  * Generate all k-combinations from an array of cards.

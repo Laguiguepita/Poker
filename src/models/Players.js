@@ -2,10 +2,11 @@
 /**
  * Create a player object
  * @param {string} name - The name of the player
+ * @param {boolean} isAnAI - The boolean for AI players
  * @param {number} chips - The initial amount of chips for the player
  * @returns {Object} A new player object
  */
-export function createPlayer(name, chips = 1000) {
+export function createPlayer(name, isAnAI, chips = 1000) {
     return Object.freeze({
         id: crypto.randomUUID(),
         name,
@@ -14,6 +15,7 @@ export function createPlayer(name, chips = 1000) {
         currentBet: 0,
         hasFolded: false,
         isInAllIn: false,
+        isIA: isAnAI,
         toString() {
             return `${name} (${chips} chips)`;
         }
@@ -43,7 +45,7 @@ export function giveCard(card, player){
  * @throws {Error} If the player has folded or doesn't have enough chips
  */
 export function placeBet(player, amount){
-    if (player.hasFolded)
+    if (player?.hasFolded)
     {
         throw new Error(`${player.name} has already folded !`);
     }
@@ -118,7 +120,14 @@ export function resetForNewHand(player){
         currentBet: 0,
         hasFolded: false,
         isInAllIn: false,
-        hand: []
+        hand: [],
+        chips: player.chips,
+        id: player.id,
+        name: player.name,
+        isIA: player.isIA,
+        toString() {
+            return `${player.name} (${chips} chips)`;
+        }
     })
 }
 
