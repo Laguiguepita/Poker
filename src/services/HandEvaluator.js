@@ -49,6 +49,8 @@ let tableCards = [
  */
 export function bestRank(playerCards, tableCards)
 {
+    console.log('Évaluation de la main pour les cartes :');
+    console.log(playerCards);
     const allCards = [...playerCards, ...tableCards];
     const allCombinations = getAllCombinations(allCards, 5);
     let bestHand = {
@@ -57,7 +59,9 @@ export function bestRank(playerCards, tableCards)
     }
     return allCombinations.reduce((acc, curr) =>
     {
+        console.log(curr.map(c => c.toString()).join(' '));
         let newRank = getRank(curr);
+        console.log(`Rang: ${newRank}\n`);
         if(acc.rank < newRank)
         {
             acc.cards = curr;
@@ -69,6 +73,7 @@ export function bestRank(playerCards, tableCards)
 
 export function compareHands(hands)
 {
+    console.log(hands);
     hands.sort((a, b) => b.evaluation.rank - a.evaluation.rank);
     return hands[0];
 }
@@ -155,6 +160,7 @@ export function getRank(cards)
     }
     if (Object.values(counts).filter(el => el === 2).length === 1)
     {
+        console.log(counts);
         return HAND_RANKS.PAIR;
     }
     return HAND_RANKS.HIGH_CARD;

@@ -190,11 +190,10 @@ async function showdown(game) {
             player,
             bestHand: cards,
             evaluation: { rank },
-            cards: cards.map(c => c.toString())
+            cards: cards.map(c => c.toString()).join(' ')
         };
     });
     
-    // Trouve le gagnant (simplifié - devrait utiliser compareHands)
     const winner = compareHands(evaluations);
     const winnerIdx = game.players.findIndex(p => p.id === winner.player.id);
     

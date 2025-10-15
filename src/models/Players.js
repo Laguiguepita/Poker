@@ -32,7 +32,7 @@ export function createPlayer(name, isAnAI, chips = 1000) {
 export function giveCard(card, player){
     return Object.freeze({
         ...player,
-        hand: [...player.hand, card]
+        hand: [...player.hand, ...card]
     })
 }
 
