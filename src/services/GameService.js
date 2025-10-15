@@ -182,6 +182,11 @@ async function resolveWinner(game) {
 
 async function showdown(game) {
     const activePlayers = getActivePlayers(game.players);
+    activePlayers.forEach(p => {
+        console.log(`${p.name} révèle ses cartes: ${p.hand.map(c => c.toString()).join(' ')}`);
+    });
+    
+    await delay(game.dealDelay);
     
     const evaluations = activePlayers.map(player => {
         const {cards, rank} = bestRank(player.hand, game.tableCard);
@@ -195,6 +200,7 @@ async function showdown(game) {
     });
     
     const winner = compareHands(evaluations);
+    console.log(`\nLe gagnant est ${winner.player.name} avec ${winner.cards} (${winner.evaluation.rank}) qui remporte le pot de ${game.pot} jetons !`);
     const winnerIdx = game.players.findIndex(p => p.id === winner.player.id);
     
     game.players[winnerIdx] = {
@@ -204,12 +210,3 @@ async function showdown(game) {
     
     await delay(game.dealDelay * 2);
 }
-
-
-
-
-//console.log("1");
-//const proms  = delay(2000);
-//delay(2000).then(() => console.log("2"));
-//proms.then(()=>console.log("4"));
-//console.log("3");

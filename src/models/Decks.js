@@ -126,7 +126,6 @@ export function countBySuit(cards) {
  * @returns {Object.<number, number>} An object mapping each card value to its count.
  */
 export function countByRank(cards) {
-  console.log(cards);
     return cards.reduce((acc, card) => {
     acc[card.value] = (acc[card.value] || 0) + 1;
     return acc;

@@ -14,30 +14,6 @@ export const HAND_RANKS = {
   ROYAL_FLUSH: 10
 }
 
-
-let cards = [
-    {rank: '2', suit: '♠', value: 2},
-    {rank: '8', suit: '♠', value: 8},
-    {rank: '10', suit: '♥', value: 10},
-    {rank: '5', suit: '♠', value: 5},
-    {rank: 'Q', suit: '♠', value: 12},
-    {rank: '7', suit: '♠', value: 7},
-    {rank: 'A', suit: '♦', value: 14}
-]
-
-let playerCards = [
-    {rank: 'J', suit: '♠', value: 11},
-    {rank: 'K', suit: '♠', value: 13}
-];
-
-let tableCards = [
-    {rank: '10', suit: '♠', value: 10},
-    {rank: '10', suit: '♥', value: 10},
-    {rank: '10', suit: '♣', value: 10},
-    {rank: 'A', suit: '♣', value: 14},
-    {rank: 'A', suit: '♠', value: 14}
-];
-
 /**
  * Compute the best 5-card hand rank from player's hole cards plus community cards.
  *
@@ -49,22 +25,23 @@ let tableCards = [
  */
 export function bestRank(playerCards, tableCards)
 {
-    console.log('Évaluation de la main pour les cartes :');
-    console.log(playerCards);
     const allCards = [...playerCards, ...tableCards];
     const allCombinations = getAllCombinations(allCards, 5);
     let bestHand = {
         cards: [],
-        rank: HAND_RANKS.HIGH_CARD
+        rank: 0,
     }
     return allCombinations.reduce((acc, curr) =>
     {
-        console.log(curr.map(c => c.toString()).join(' '));
         let newRank = getRank(curr);
-        console.log(`Rang: ${newRank}\n`);
         if(acc.rank < newRank)
         {
             acc.cards = curr;
+            acc.rank = newRank;
+        }
+        else if (acc.rank === newRank)
+        {
+            acc.cards = compareWithSameRank(curr, acc.cards);
             acc.rank = newRank;
         }
         return acc;
@@ -73,9 +50,43 @@ export function bestRank(playerCards, tableCards)
 
 export function compareHands(hands)
 {
-    console.log(hands);
     hands.sort((a, b) => b.evaluation.rank - a.evaluation.rank);
-    return hands[0];
+    let count = hands.reduce((acc, curr) => {
+        acc[curr.evaluation.rank] = (acc[curr.evaluation.rank] || 0) + 1;
+        return acc;
+    }, {})
+    let maxKey = Object.keys(count).reduce((a, b) => count[a] > count[b] ? a : b);
+    const winner = hands[0];
+    if (count[maxKey] > 1)
+    {
+        let sameRankHands = hands.filter(h => h.evaluation.rank.toString() === maxKey);
+        let bestHand = sameRankHands[0];
+        for (let i = 1; i < sameRankHands.length; i++)
+        {
+            bestHand = compareWithSameRank(sameRankHands[i].bestHand, bestHand.bestHand);
+        }
+        winner = hands.find(h => h.bestHand === bestHand);
+    }
+    return winner;
+}
+
+function compareWithSameRank(newRank, bestRank)
+{
+    newRank.sort((a, b) => a.value - b.value);
+    bestRank.sort((a, b) => a.value - b.value);
+
+    for (let i = 0; i < newRank.length; i++)
+    {
+        if (newRank[i].value - bestRank[i].value > 0)
+        {
+            return newRank;
+        }
+        else if (newRank[i].value - bestRank[i].value < 0)
+        {
+            return bestRank;
+        }
+    }
+    return bestRank;
 }
 
 /**
@@ -160,7 +171,6 @@ export function getRank(cards)
     }
     if (Object.values(counts).filter(el => el === 2).length === 1)
     {
-        console.log(counts);
         return HAND_RANKS.PAIR;
     }
     return HAND_RANKS.HIGH_CARD;
