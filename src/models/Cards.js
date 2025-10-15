@@ -3,19 +3,7 @@
  *
  * DESIGN CHOICES:
  * - Immutable object (freeze) : ensures that a card cannot be modified
- * - Factory function over class :
- *  Benefits of using Factory Functions over Classes in javascript
- *
- *    There is no use of this keyword when instantiating variables. It is only used inside methods. This reduces the confusion of the this keyword.
- *
- *    There is no use of the new keyword which is often forgotten when creating objects using classes.
- *
- *    It is easier to setup since it looks quite similar to regular functions.
- *
- *    Simplicity - Factory functions provide a more straightforward and flexible way to create objects. They don't have the syntactic complexities that come with class declarations and prototypes, making them more approachable for developers who prefer a simpler syntax.
- *
- *    Encapsulation with Closures: It is easy to encapsulate private variables and objects with Factory functions since is natural to them.This enhances data privacy and abstraction.
- *
+ * - Factory function over class 
  * - Strict validation : ensures that only valid cards can be created
  */
 

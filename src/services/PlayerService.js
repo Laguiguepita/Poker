@@ -1,3 +1,21 @@
+/**
+ * Generate an AI player's action based on simple probability and game context.
+ *
+ * The AI evaluates whether to fold, call, raise, or check depending on:
+ * - The cost to call (`amountToCall`)
+ * - The player's remaining chips
+ * - Random probability thresholds
+ *
+ * Behavior:
+ * - 30% chance to fold if the amount to call > 50% of chips
+ * - 15% chance to raise if the player has enough chips
+ * - Otherwise calls or checks depending on the situation
+ *
+ * @async
+ * @param {Object} game - The current game state.
+ * @param {{name:string, chips:number, currentBet:number}} player - The AI player object.
+ * @returns {Promise<{type:'fold'|'call'|'raise'|'check', amount?:number}>} The chosen AI action.
+ */
 export async function getAIAction(game, player) {
     const amountToCall = game.currentBet - player.currentBet;
     const random = Math.random();
@@ -20,6 +38,21 @@ export async function getAIAction(game, player) {
 }
 
 
+/**
+ * Ask a human player for an action via command-line input.
+ *
+ * Displays the current game state (chips, cards, pot, etc.) and prompts
+ * the player for one of several possible actions, depending on the situation:
+ * - If `amountToCall > 0`: follow, raise, or fold.
+ * - Otherwise: check or bet.
+ *
+ * Uses `game.rl` (Node.js `readline` interface) for synchronous question/response flow.
+ *
+ * @async
+ * @param {Object} game - The current game state, including the readline interface.
+ * @param {{name:string, chips:number, hand:Object[], currentBet:number}} player - The human player.
+ * @returns {Promise<{type:'fold'|'call'|'raise'|'check', amount?:number}>} The selected player action.
+ */
 export async function getHumanAction(game, player) {
     const amountToCall = game.currentBet - player.currentBet;
     

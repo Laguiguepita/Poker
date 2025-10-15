@@ -35,7 +35,7 @@ function displayGameState(game) {
 
 async function askPlayAgain(rl) {
   return new Promise((resolve) => {
-    rl.question('\n🎲 Jouer une autre main ? (o/n): ', (answer) => {
+    rl.question('\nJouer une autre main ? (o/n): ', (answer) => {
       resolve(answer.toLowerCase() === 'o' || answer.toLowerCase() === 'oui');
     });
   });

@@ -48,6 +48,18 @@ export function bestRank(playerCards, tableCards)
     }, bestHand);
 }
 
+
+/**
+ * Compare multiple evaluated hands and return the winning entry.
+ *
+ * Hands are first sorted by rank (descending). In case of ties on rank,
+ * a kicker-style comparison is performed among the tied hands using
+ * {@link compareWithSameRank}.
+ *
+ * @param {{player:Object, bestHand:{rank:string,suit:string,value:number}[], evaluation:{rank:number}}[]} hands
+ *  - Array of evaluated hands (each element must include `.bestHand` and `.evaluation.rank`).
+ * @returns {{player:Object, bestHand:Object[], evaluation:{rank:number}}} The winning hand entry.
+ */
 export function compareHands(hands)
 {
     hands.sort((a, b) => b.evaluation.rank - a.evaluation.rank);
@@ -70,6 +82,19 @@ export function compareHands(hands)
     return winner;
 }
 
+
+/**
+ * Tie-breaker for hands of the same rank.
+ *
+ * Sorts both 5-card arrays ascending by value and compares card by card.
+ * Returns the array corresponding to the higher sequence at the first difference;
+ * if fully equal, returns `bestRank` (the current best).
+ *
+ * @private
+ * @param {{rank:string, suit:string, value:number}[]} newRank - Candidate hand to compare.
+ * @param {{rank:string, suit:string, value:number}[]} bestRank - Current best hand at same rank.
+ * @returns {{rank:string, suit:string, value:number}[]} The winning hand between the two inputs.
+ */
 function compareWithSameRank(newRank, bestRank)
 {
     newRank.sort((a, b) => a.value - b.value);

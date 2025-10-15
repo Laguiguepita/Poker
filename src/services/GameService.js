@@ -12,6 +12,13 @@ import {getHumanAction, getAIAction} from "./PlayerService.js";
 import { bestRank, compareHands } from "./HandEvaluator.js";
 
 
+/**
+ * Create and initialize a new game state.
+ *
+ * @param {Array<[string, number]>} newPlayers - Array of tuples [name, startingChips].
+ * @param {number} rlIndex - Index/handle to an external readline (or UI) resource.
+ * @returns {Object} The initialized game object.
+ */
 export function createNewGame(newPlayers, rlIndex)
 {
     const players = newPlayers.map(player => createPlayer(player[0], player[1], 1000));
@@ -33,10 +40,33 @@ export function createNewGame(newPlayers, rlIndex)
     };
 }
 
+
+/**
+ * Promise-based delay helper.
+ *
+ * @param {number} time - Delay in milliseconds.
+ * @returns {Promise<void>} Resolves after the specified delay.
+ */
 export function delay(time){
     return new Promise((resolve) => setTimeout(resolve, time));
 }
 
+
+/**
+ * Start a new hand: reset players, shuffle, deal, run betting rounds and showdown.
+ *
+ * Flow:
+ * - Reset players & deck
+ * - Deal hole cards + blinds + pre-flop betting
+ * - Flop + betting
+ * - Turn + betting
+ * - River + betting
+ * - Showdown / early winner resolution
+ *
+ * @async
+ * @param {Object} game - The current game state (mutated throughout the flow).
+ * @returns {Promise<Object>} The updated game state after the hand completes.
+ */
 export async function startNewGame(game)
 {
     game.players = game.players.map(player => resetForNewHand(player));
@@ -77,7 +107,19 @@ export async function startNewGame(game)
     return game;
 }
 
-
+/**
+ * Execute a full betting round for the current phase.
+ *
+ * Turn order:
+ * - Pre-flop: starts left of big blind
+ * - Otherwise: starts left of small blind
+ *
+ * Terminates when all active players have acted and no pending calls remain.
+ *
+ * @async
+ * @param {Object} game - Game state; reads/modifies players, currentBet, etc.
+ * @returns {Promise<void>} Resolves when the betting round is complete.
+ */
 async function bettingRound(game) {
     const activePlayers = getActivePlayers(game.players);
     if (activePlayers.length <= 1) return;
@@ -127,7 +169,19 @@ async function bettingRound(game) {
     game.currentBet = 0;
 }
 
-
+/**
+ * Apply a player's action to the game state (fold/check/call/raise).
+ *
+ * Side effects:
+ * - Mutates `game.players[playerIdx]`, `game.pot`, and possibly `game.currentBet`.
+ *
+ * @async
+ * @param {Object} game - Game state object.
+ * @param {Object} player - Player taking the action (snapshot before mutation).
+ * @param {{type:'fold'|'check'|'call'|'raise', amount?:number}} action - Action descriptor.
+ * @param {number} playerIdx - Index of the acting player in `game.players`.
+ * @returns {Promise<void>} Resolves after the action is processed.
+ */
 async function processAction(game, player, action, playerIdx) {
     switch (action.type) {
         case 'fold':
@@ -150,11 +204,21 @@ async function processAction(game, player, action, playerIdx) {
     }
 }
 
-
+/**
+ * Post small blind and big blind at the start of the hand.
+ *
+ * Side effects:
+ * - Deducts chips from blind players
+ * - Updates `game.pot` and `game.currentBet`
+ *
+ * @async
+ * @param {Object} game - Game state with blind positions and amounts.
+ * @returns {Promise<void>} Resolves after applying the blind delay.
+ */
 async function blindBet(game)
 {
 
-    //TODO check if not enougth
+    // TODO: check if not enough chips
     game.players[game.bigBlindPos] = placeBet(game.players[game.bigBlindPos], game.bigBlind);
     game.players[game.smallBlindPos] = placeBet(game.players[game.smallBlindPos], game.smallBlind);
 
@@ -164,11 +228,19 @@ async function blindBet(game)
     await delay(game.actionDelay);
 }
 
+
+
+/**
+ * Resolve the winner when only one player remains active (no showdown).
+ *
+ * @async
+ * @param {Object} game - Game state.
+ * @returns {Promise<void>} Resolves after awarding chips and applying a delay.
+ */
 async function resolveWinner(game) {
     const winner = getActivePlayers(game.players)[0];
     const winnerIdx = game.players.findIndex(p => p.id === winner.id);
     
-    // Donne le pot au gagnant
     game.players[winnerIdx] = {
         ...winner,
         chips: winner.chips + game.pot
@@ -179,7 +251,15 @@ async function resolveWinner(game) {
     await delay(game.dealDelay * 2);
 }
 
-
+/**
+ * Showdown: reveal hands of all active players, evaluate, and award the pot.
+ *
+ * Uses `bestRank` to evaluate each player's best 5-card combo and `compareHands` to pick the winner.
+ *
+ * @async
+ * @param {Object} game - Game state containing players and `tableCard`.
+ * @returns {Promise<void>} Resolves after awarding chips and applying a delay.
+ */
 async function showdown(game) {
     const activePlayers = getActivePlayers(game.players);
     activePlayers.forEach(p => {

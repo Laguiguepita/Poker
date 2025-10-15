@@ -3,8 +3,8 @@
  * 
  * CHOIX DE CONCEPTION :
  * - Approche fonctionnelle : les opérations retournent de nouveaux decks
- * - Utilisation intensive de map/filter/reduce : démontre la maîtrise de ces méthodes
- * - Algorithme de Fisher-Yates pour le mélange : standard de l'industrie
+ * - Utilisation intensive de map/filter/reduce
+ * - Algorithme de Fisher-Yates pour le mélange
  */
 
 import { createCard, SUITS, RANKS } from './Cards.js';
